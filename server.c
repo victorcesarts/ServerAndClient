@@ -9,7 +9,8 @@
 #include <sys/types.h>
 
 #include <regex.h>
- #include <ctype.h>
+#include <ctype.h>
+#include<stdbool.h>
 
 #define BUFSZ 1024
 
@@ -43,41 +44,61 @@ int extractNumber(char* buff){
     char *ptr;
     int snsr = 0;
     int machn = 0;
-    int sensores[4];
+    int sensors[3];
     int machines[4];
+    bool evaluateSns = false;
+    bool evaluateMchn = false;  
     
     while (*buff){
         ptr = strstr(buff, str);
-        if(ptr != NULL && snsr != 4){
-            if (isdigit(*buff)) {
+        if (ptr != NULL && snsr != 4){
+            if (isdigit(*buff)){
                 long val = strtol(buff, &buff, 10);
-                sensores[snsr] = (int)val;
-                printf("Sensors: %d\n", sensores[snsr]);
+                sensors[snsr] = (int)val;
+                printf("Sensors: %d\n", sensors[snsr]);
                 snsr++;
-            } else {
+                evaluateSns = true;
+            }
+            else{
                 buff++;
             }
-        }else{
-            if(ptr == NULL && machn != 4){
-                if (isdigit(*buff)) {
-                    long val = strtol(buff, &buff, 10);
-                    machines[machn] = (int)val;
-                    printf("Machines: %d\n", machines[machn]);
-                    machn++;
-                }
-            }else{
-                buff++;
-            }           
         }
+        else{
+            if (ptr != NULL && snsr == 4){
+                printf("You must add until 3 sensors in one command line.\n");
+                return -1;
+            }
+            else{
+                if (ptr == NULL){
+                    if (isdigit(*buff) && machn <= 3 && evaluateSns){
+                        long val = strtol(buff, &buff, 10);
+                        machines[machn] = (int)val;
+                        printf("Machines: %d\n", machines[machn]);
+                        machn++;
+                        evaluateMchn = true;
+                    }
+                    else{
+                        buff++;
+                    }
 
-
-        /* while(*sensors){
-            printf("%d", *sensors);
-            sensors++;
-        } */
-        
+                    if (evaluateMchn){
+                        printf("Is that an end?\n");
+                    }
+                }
+            }
+        }
     }
-    return 0;
+
+    if (evaluateSns && !evaluateMchn){
+        printf("Sintax error\n");
+        return -1;
+    }
+    if (!evaluateMchn){
+        printf("Sintax error\n");
+        return -1;
+    }
+
+    return *sensors;
 }
 
 
@@ -164,7 +185,7 @@ int main(int argc, char **argv) {
         }else{
             
             regex_t regex1;
-            int verifyRegx1 = regcomp(&regex1, "add sensor", 0);
+            int verifyRegx1 = regcomp(&regex1, "add sensor", REG_EXTENDED);
 
             if (verifyRegx1 != 0){
                 logexit("Regex error compilation. \n");
