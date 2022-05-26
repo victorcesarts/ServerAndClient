@@ -33,11 +33,6 @@ typedef struct{
     processVariables variables[4];
 }equipment;
 
-void addSensor(int equipmentId, int sensorId, equipment* eq){
-    for (int i = 0; i <= 3; i++) {
-        //printf("%d\n", eq[i].sensors[i]);
-    }
-}
 
 bool existSensor(equipment* eq, int snsr, int numEq, int sensor){
       
@@ -51,7 +46,7 @@ bool existSensor(equipment* eq, int snsr, int numEq, int sensor){
  return false;
 }
 
-equipment *extractNumber(char *buff, equipment *eq){
+void addSensor(char *buff, equipment *eq){
 
     const char str[] = "in";
     char *ptr;
@@ -71,6 +66,9 @@ equipment *extractNumber(char *buff, equipment *eq){
                     sensors[snsr] = (int)val;
                     snsr++;
                     evaluateSns = true;
+                }else{
+                    printf("invalid sensor\n");
+                    exit(EXIT_FAILURE);
                 }
             }
             else{
@@ -90,6 +88,9 @@ equipment *extractNumber(char *buff, equipment *eq){
                             machines[machn] = (int)val;
                             machn++;
                             evaluateMchn = true;
+                        }else{
+                            printf("invalid equipment\n");
+                            exit(EXIT_FAILURE);
                         }
                     }
                     else{
@@ -130,42 +131,60 @@ equipment *extractNumber(char *buff, equipment *eq){
             numMachnChange++;
         }
     }
-    return eq;
+    
 }
 
-void listSensors(char *buff, equipment* eq){
+void listSensors(char *buff, equipment *eq)
+{
     const char str[] = "in";
     char *ptr;
-     while (*buff){
+    bool evaluate = false;
+
+    while (*buff){
         ptr = strstr(buff, str);
-        if (ptr != NULL){
+        if ((ptr == NULL)){
             if (isdigit(*buff)){
                 long val = strtol(buff, &buff, 10);
-                for (int i = 0; i < 4; i++){
-                    if (eq[i].equipmentId == (int)val){
-                        for(int j = 0; j < 4; j++){
-                            if(eq[i].equipmentId != 0){
-                                printf("%d", eq[i].sensors[j]);
-                            }else{
-                                printf("none");
+                if (((int)val > 0 && (int)val < 5) && (!evaluate)){
+                    for (int i = 0; i < 4; i++){
+                        if (eq[i].equipmentId == (int)val){
+                            for (int j = 0; j < 4; j++){
+                                if (eq[i].sensors[j] != 0){
+                                    printf("%d ", eq[i].sensors[j]);
+                                }
+                                else{
+                                    printf("none ");
+                                }
                             }
-                            printf("\n");
                         }
                     }
-                    
+                    evaluate = true;
+                    printf("\n");
                 }
-                
+                else{
+                    exit(EXIT_FAILURE);
+                }
+            }
+            else{
+                buff++;
             }
         }
-        buff++;
-    } 
-
+        else{
+            buff++;
+        }
+    }
+    if(!evaluate){
+        exit(EXIT_FAILURE);
+    }
 }
 
+
+void removeSensor(char *buff, equipment *eq){
+
+}
 
 int main(int argc, char **argv) {
      
-
     if (argc < 3) {
         usage(argc, argv);
     }
@@ -237,33 +256,72 @@ int main(int argc, char **argv) {
         }
         else{
 
+            /* ADD SENSOR BLOCK */
+
             regex_t regex1;
             int verifyRegx1 = regcomp(&regex1, "add sensor", REG_EXTENDED);
-            
+
             if (verifyRegx1 != 0){
                 logexit("Regex error compilation. \n");
             }
             else{
                 int matchRegx = regexec(&regex1, buf, 0, NULL, 0);
-                if (matchRegx == 0){
-                    extractNumber(buf, equipments);
+                if (matchRegx == 0)
+                {
+                    addSensor(buf, equipments);
                     printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
-                }else{
-                    regex_t regex2;
-                    int verifyRegx2 = regcomp(&regex2, "list sensors", REG_EXTENDED);
+                }
+                else
+                {
 
-                    if (verifyRegx2 != 0){
+                    /*  LIST SENSORS BLOCK */
+
+                    verifyRegx1 = regcomp(&regex1, "list sensors", REG_EXTENDED);
+                    if (verifyRegx1 != 0)
+                    {
                         logexit("Regex error compilation. \n");
                     }
-                    else{
-                        int matchRegx2 = regexec(&regex2, buf, 0, NULL, 0);
-                        if (matchRegx2 == 0){
+                    else
+                    {
+                        matchRegx = regexec(&regex1, buf, 0, NULL, 0);
+                        if (matchRegx == 0)
+                        {
                             listSensors(buf, equipments);
                             printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
                         }
+                        else
+                        {
+
+                            /*  KILL BLOCK */
+
+                            verifyRegx1 = regcomp(&regex1, "kill", REG_EXTENDED);
+                            if (verifyRegx1 != 0){
+                                logexit("Regex error compilation. \n");
+                            }
+                            else{
+                                matchRegx = regexec(&regex1, buf, 0, NULL, 0);
+                                if (matchRegx == 0){
+                                    printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
+                                    break;
+                                }
+                                else{
+                                    verifyRegx1 = regcomp(&regex1, "remove sensor", REG_EXTENDED);
+                                    if (verifyRegx1 != 0){
+                                        logexit("Regex error compilation. \n");
+                                    }
+                                    else{
+                                        matchRegx = regexec(&regex1, buf, 0, NULL, 0);
+                                        if (matchRegx == 0){
+                                            removeSensor(buf, equipments);
+                                            printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            }
+            } 
 
             sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
             count = send(csock, buf, strlen(buf) + 1, 0);
