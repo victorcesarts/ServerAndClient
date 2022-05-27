@@ -1,3 +1,7 @@
+/* VÍCTOR CÉSAR TEIXEIRA SANTOS
+MATRÍCULA 2020021832
+EMAIL: victorcesarts@gmail.com */
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

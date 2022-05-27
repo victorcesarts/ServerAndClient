@@ -1,3 +1,7 @@
+/* VÍCTOR CÉSAR TEIXEIRA SANTOS
+MATRÍCULA 2020021832
+EMAIL: victorcesarts@gmail.com */
+
 #include "common.h"
 
 #include <stdio.h>
@@ -222,7 +226,6 @@ char* removeSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
                 }else{
                     sprintf(strRetr, "invalid sensor\n");
                     return strRetr;
-                    
                 }
             }
             else{
@@ -272,7 +275,7 @@ char* removeSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
                 for (int h = 0; h < snsr; h++){
                     for (int j = 0; j < 4; j++){
                         bool exist = existSensor(eq, snsr, numEq, sensors[h]);
-                        if (exist){ 
+                        if ((exist) && (eq[numEq].sensors[j][0] == sensors[h])){ 
                             eq[numEq].sensors[j][0] = 0;
                             sprintf(aux, "Sensor %d removed\n", sensors[h]);
                             strcat(strRetr, aux);
@@ -437,9 +440,9 @@ int main(int argc, char **argv) {
    
     equipment empilhadeira = {04, {{0,0},{0,0},{0,0},{0,0}}};
 
-    equipment equipments[4];
+    /* WE CREATE AN ARRAY OF EQUIPMENTS TO OUR INDUSTRY */
 
-    /* WE CREATE AN ARRAY OF EQUIPMENTS FROM OUR INDUSTRY */
+    equipment equipments[4];
 
     equipments[0] = esteira;
     equipments[1] = guindaste;
@@ -576,5 +579,5 @@ int main(int argc, char **argv) {
         }
     }
         exit(EXIT_SUCCESS);
-    
+    /* IT'S TIME TO RETURN TO CLIENT */
 }

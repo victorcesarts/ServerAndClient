@@ -1,3 +1,7 @@
+/* VÍCTOR CÉSAR TEIXEIRA SANTOS
+MATRÍCULA 2020021832
+EMAIL: victorcesarts@gmail.com */
+
 #pragma once
 
 #include <stdlib.h>
