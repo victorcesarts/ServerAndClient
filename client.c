@@ -80,9 +80,10 @@ int main(int argc, char **argv) {
 		total += count;
 	}
 	close(s);
-
-	printf("received %u bytes\n", total);
+	
 	puts(buf);
+	printf("received %u bytes\n", total);
+	
 
 	exit(EXIT_SUCCESS);
 }
