@@ -22,30 +22,24 @@ void usage(int argc, char **argv) {
     exit(EXIT_FAILURE);
 }
 
-typedef struct{
-    double velocity;
-    double acceleration;
-    double pressure; 
-    double current;
-} processVariables;
-
+/* Equipments are defined by having an Id and sensors, each sensor has a value associated */
 typedef struct{
     int equipmentId;
     float sensors[4][2];
     
 }equipment;
 
-
+/* Sometimes you want to see if a sensor already exists in an equipment */
 bool existSensor(equipment* eq, int snsr, int numEq, int sensor){
-      
-        for (int j = 0; j < 4; j++){
-            if(eq[numEq].sensors[j][0] == sensor){
-                return true;
-            }
-        }    
+    for (int j = 0; j < 4; j++){
+        if(eq[numEq].sensors[j][0] == sensor){
+            return true;
+        }
+    }    
  return false;
 }
 
+/* Well, sensors needs a value to read and display */
 void generateRandom(equipment *eq, int numEq, int positionSnsr){
     float a = 10.00;
     float readValue = (float)rand()/(float)(RAND_MAX) * a;
@@ -64,14 +58,14 @@ char* addSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
     bool evaluateMchn = false;
     char aux[1024];
 
-   /*  BLOCK TO EXTRACT WHAT SENSORS AND WHAT MACHINES ONE WANTS TO CHANGE */
+   /*  BLOCK TO EXTRACT WHICH SENSORS AND WHICH MACHINES ONE WANTS TO CHANGE */
 
     while (*buff){
         ptr = strstr(buff, str);
-        if (ptr != NULL && snsr != 4){
+        if (ptr != NULL && snsr != 4){  /* SEARCHING FOR THE SENSORS THAT ARE BEFORE STRING 'IN' */
             if (isdigit(*buff)){
-                long val = strtol(buff, &buff, 10);
-                if ((int)val > 0 && (int)val < 5){
+                long val = strtol(buff, &buff, 10); /* HERE WE ARE TRANSFORMING THE VALUE OF SENSOR IN OUR STRING TO AN LONG INT */
+                if ((int)val > 0 && (int)val < 5){ /* SENSORS HAVE VALUES ONLY BETWEEN 1 AND 4 */
                     sensors[snsr] = (int)val;
                     snsr++;
                     evaluateSns = true;
@@ -85,22 +79,21 @@ char* addSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
             }
         }
         else{
-            if (ptr != NULL && snsr == 4){
+            if (ptr != NULL && snsr == 4){ /* IF YOU TRY TO ADD A HUGE NUMBER OF SENSORS (MORE THAN 3) PROGRAM WILL COMPLAIN */
                 sprintf(strRetr,"You must declare until 3 sensors in one command line.\n");
                 return strRetr;
             }
             else{
                 if (ptr == NULL){
-                    if (isdigit(*buff) && machn <= 3 && evaluateSns){
+                    if (isdigit(*buff) && machn <= 3 && evaluateSns){ /* ONCE WE HAVE FOUND THE STRING 'IN' AND WE'VE HAD NO PROBLEM WITH SENSORS WE WANT THOSE EQUIPMENTS */
                         long val = strtol(buff, &buff, 10);
                         if ((int)val > 0 && (int)val < 5){
                             machines[machn] = (int)val;
                             machn++;
                             evaluateMchn = true;
                         }else{
-                            sprintf(strRetr, "invalid equipment\n");
+                            sprintf(strRetr, "invalid equipment\n"); 
                             return strRetr;
-                            
                         }
                     }
                     else{
@@ -111,26 +104,27 @@ char* addSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
         }
     }
 
-    if (evaluateSns && !evaluateMchn){
+    if (evaluateSns && !evaluateMchn){ /* IF WE HAVE ANALISED SENSORS, BUT NOT THE MACHINES, WE MIGHT HAVE HAD A PROBLEM AFTER STRING 'IN' */
         sprintf(strRetr, "Sintax error\n");
         exit(EXIT_FAILURE);
     }
-    if (!evaluateMchn){
+    if (!evaluateMchn){ /* IF WE'VE GOT A PROBLEM ON EVERYTHING, WE'RE GOING TO GET OUT */
         sprintf(strRetr, "Sintax error\n");
         exit(EXIT_FAILURE);
     }
+    /* NOW WE HAVE AN ARRAY WITH THE SENSORS sensors[] AND MACHINES machines[] WE WANT TO ADD, LET'S DO THAT BELOW */
 
-    for (int numEq = 0; numEq < 4; numEq++){
+    for (int numEq = 0; numEq < 4; numEq++){ /* WE WILL SEARCH THROUGH ALL OUR 4 EQUIPMENTS IN THE FACTORY */
         int numMachnChange = 0;
         while (numMachnChange < machn){
-            if (eq[numEq].equipmentId == machines[numMachnChange]){
+            if (eq[numEq].equipmentId == machines[numMachnChange]){ /* IF WE'VE FOUND AN EQUIPMENT THAT WE WANT TO DO SOMETHING... */
                 for (int h = 0; h < snsr; h++){
                     for (int j = 0; j < 4; j++){
-                        bool exist = existSensor(eq, snsr, numEq, sensors[h]);
+                        bool exist = existSensor(eq, snsr, numEq, sensors[h]); /* WE WILL NEED TO VERIFY IF THE MACHINE THAT WE'RE MODIFYING ALREADY HAVE THE SENSOR WE WANT TO ADD */
                         if ((eq[numEq].sensors[j][0] == 0) && !exist){
-                            if(*numSensors < 15){
-                                eq[numEq].sensors[j][0] = sensors[h];
-                                generateRandom(eq, numEq, j);
+                            if(*numSensors < 15){ //limit of sensors is 15
+                                eq[numEq].sensors[j][0] = sensors[h]; /* ADDING A SENSOR */
+                                generateRandom(eq, numEq, j); /* AFTER ADDED THE SENSOR, WE LINK A FLOAT NUMBER THAT WILL SIMULATE THE VALUE IT WILL READ */
                                 sprintf(aux, "Sensor %d added\n", sensors[h]);
                                 strcat(strRetr, aux);
                                 *numSensors = *numSensors + 1;
@@ -164,15 +158,15 @@ char* listSensors(char *buff, equipment *eq, char *strRetr){
     
     while (*buff){
         ptr = strstr(buff, str);
-        if ((ptr == NULL)){
+        if ((ptr == NULL)){ /* WE ARE SEARCHING FOR THE EQUIPMENT AFTER OUR "IN" */
             if (isdigit(*buff)){
                 long val = strtol(buff, &buff, 10);
                 if (((int)val > 0 && (int)val < 5) && (!evaluate)){
                     for (int i = 0; i < 4; i++){
-                        if (eq[i].equipmentId == (int)val){
+                        if (eq[i].equipmentId == (int)val){ /* WE'VE FOUND THE EQUIPMENT */
                             for (int j = 0; j < 4; j++){
                                 
-                                if (eq[i].sensors[j][0] != 0){
+                                if (eq[i].sensors[j][0] != 0){ /* WE'RE SEEING IF THE EQUIPMENT EXIST IN THE EQUIPMENT */
                                     sprintf(aux, "%d ", (int)eq[i].sensors[j][0]);
                                     strcat(strRetr, aux);
                                 }
@@ -197,13 +191,13 @@ char* listSensors(char *buff, equipment *eq, char *strRetr){
             buff++;
         }
     }
-    if(!evaluate){
+    if(!evaluate){ /* IF WE'VE HAD SOME PROBLEM WITH THE STRING, WE DIDN'T EVALUATE THE EQUIPMENTS AND THEN WE'RE GETTING OUT */
         exit(EXIT_FAILURE);
     }
     return strRetr;
 }
 
-
+/* FUNCTION BELOW USES THE SAME LOGIC OF EXTRACTING NUMBERS OF SENSORS AND MACHINES THAT WAS SHOWED AT FUNCTION addSensor() */
 char* removeSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
 
     const char str[] = "in";
@@ -278,11 +272,11 @@ char* removeSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
                 for (int h = 0; h < snsr; h++){
                     for (int j = 0; j < 4; j++){
                         bool exist = existSensor(eq, snsr, numEq, sensors[h]);
-                        if (exist){
+                        if (exist){ 
                             eq[numEq].sensors[j][0] = 0;
                             sprintf(aux, "Sensor %d removed\n", sensors[h]);
                             strcat(strRetr, aux);
-                            *numSensors = *numSensors - 1;
+                            *numSensors = *numSensors - 1;                  /* DECREASING NUMBERS OF SENSORS */
                             break;
                         }
                         else if (!exist){
@@ -299,6 +293,7 @@ char* removeSensor(char *buff, equipment *eq, int *numSensors, char *strRetr){
     return strRetr;
 }
 
+/* FUNCTION BELOW ALSO USES THE SAME LOGIC OF EXTRACTING NUMBER OF SENSORS AND MACHINES */
 char* consultVariables(char *buff, equipment *eq, char *strRetr){
 
     const char str[] = "in";
@@ -364,20 +359,21 @@ char* consultVariables(char *buff, equipment *eq, char *strRetr){
         sprintf(strRetr, "Sintax error\n");
         exit(EXIT_FAILURE);
     }
-    bool installed = true;
+
+    bool installed = true; /* JUST TO HELP FORMATING THE OUTPUT WITH NEW LINE AT THE END */
     for (int numEq = 0; numEq < 4; numEq++){
         int numMachnChange = 0;
         
         while (numMachnChange < machn){
             if (eq[numEq].equipmentId == machines[numMachnChange]){
-                for (int h = 0; h < snsr; h++){
-                    for (int j = 0; j < 4; j++){
-                        if ((eq[numEq].sensors[j][0] != 0) && (eq[numEq].sensors[j][0] == sensors[h])){
+                for (int h = 0; h < snsr; h++){ /* SEARCHING THROUG ARRAY OF SENSORS ONE COULD SPECIFIED IN THE COMMAND LINE */
+                    for (int j = 0; j < 4; j++){    /* SEARCHING IN OUR EQUIPMENTS */
+                        if ((eq[numEq].sensors[j][0] != 0) && (eq[numEq].sensors[j][0] == sensors[h])){ /*  WE FOUND OUT THE SENSOR IN OUR EQUIPMENTS, NOW WE WILL JUST PRINT THE VALUE READED */
                             sprintf(aux, "%.2f ", eq[numEq].sensors[j][1]);
                             strcat(strRetr, aux);
                             break;
                         }
-                        else if (eq[numEq].sensors[j][0] == 0){
+                        else if (eq[numEq].sensors[j][0] == 0){ 
                             sprintf(aux, " %d ", sensors[h]);
                             strcat(strRetr, aux);
                             installed = false;
@@ -385,7 +381,7 @@ char* consultVariables(char *buff, equipment *eq, char *strRetr){
                         }
                     }
                 }
-                if(!installed){
+                if(!installed){ /* AS I SAID, HELPING TO PRINT OUT... */
                     sprintf(aux, " not installed in %d\n", eq[numEq].equipmentId);
                     strcat(strRetr, aux);
                 }
@@ -430,6 +426,9 @@ int main(int argc, char **argv) {
         logexit("listen");
     }
 
+    /* HERE WE ARE DECLARING SOME EQUIPMENTS, WE INITIALIZE EVERYTHING WITH VALUE 0
+    EXCEPT THE ID FROM THE EQUIPMENTS */
+
     equipment esteira = {01, {{0,0},{0,0},{0,0},{0,0}}};
    
     equipment guindaste = {02, {{0,0},{0,0},{0,0},{0,0}}};
@@ -439,6 +438,8 @@ int main(int argc, char **argv) {
     equipment empilhadeira = {04, {{0,0},{0,0},{0,0},{0,0}}};
 
     equipment equipments[4];
+
+    /* WE CREATE AN ARRAY OF EQUIPMENTS FROM OUR INDUSTRY */
 
     equipments[0] = esteira;
     equipments[1] = guindaste;
@@ -477,17 +478,18 @@ int main(int argc, char **argv) {
         else{
 
             /* ADD SENSOR BLOCK */
+            /* EVERY COMMAND IS EVALUATED USING REGULAR EXPRESSION */
 
             regex_t regex1;
             int verifyRegx1 = regcomp(&regex1, "add sensor", REG_EXTENDED);
 
-            if (verifyRegx1 != 0){
+            if (verifyRegx1 != 0){ /* IF WE HAVE SOME PROBLEM WITH REGEX */
                 logexit("Regex error compilation. \n");
             }
             else{
-                int matchRegx = regexec(&regex1, buf, 0, NULL, 0);
+                int matchRegx = regexec(&regex1, buf, 0, NULL, 0); /* VERIFYING OUR ENTRY WITH THE REGEX TO BE MATCHED */
                 if (matchRegx == 0){
-                    if(numSensors < 15){
+                    if(numSensors < 15){ /* SENSORS LIMIT IS 15 */
                         memset(bufRet, 0, BUFSZ2);
                         addSensor(buf, equipments, &numSensors, bufRet);
                         printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
@@ -564,8 +566,8 @@ int main(int argc, char **argv) {
                 }
             }
 
-            //sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
-
+            /* EVERY FUNCTION RETURN A STRING WITH THE RESULT OF THE EVALUATION MADED,
+            THEN, WE SEND THIS STRING TO CLIENT. */
             count = send(csock, bufRet, strlen(bufRet) + 1, 0);
             if (count != strlen(bufRet) + 1){
                 logexit("send");

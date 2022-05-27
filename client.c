@@ -80,6 +80,8 @@ int main(int argc, char **argv) {
 		total += count;
 	}
 	close(s);
+
+	/* PRINTING THE RESULT WE RECEIVED FROM SERVER */
 	
 	puts(buf);
 	printf("received %u bytes\n", total);
